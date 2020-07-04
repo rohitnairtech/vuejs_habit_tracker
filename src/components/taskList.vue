@@ -2,15 +2,18 @@
   <v-container class="mt-12" style="max-width: 500px">
     <v-text-field
       v-model="task"
-      label="What are you working on?"
+      label="What habits do you want to build?"
       solo
       @keydown.enter="create"
+      :error="error !== null"
+      :error-messages="error"
     >
     <!-- <template > -->
       <v-fade-transition slot="append">
         <v-icon
           v-if="task"
           @click="create"
+          large
         >
           mdi-plus-circle-outline
         </v-icon>
@@ -25,9 +28,9 @@
 
 
     </p> -->
-      <v-fade-transition slot="append">
+<!--       <v-fade-transition slot="append">
         <p class="text-caption accent-1 red--text" v-if="error">{{error}}</p>
-      </v-fade-transition>
+      </v-fade-transition> -->
 
     <h2 class="display-1 success--text pl-4">
       Tasks:&nbsp;
@@ -66,18 +69,18 @@
     <v-divider class="mb-4"></v-divider>
 
     <v-card v-if="tasks.length > 0" >
-      <v-slide-y-transition
+    <v-slide-y-transition
         class="py-0"
         group
         tag="v-list"
+        :hide-on-leave="true"
       >
         <template v-for="(task, i) in tasks">
           <v-divider
             v-if="i !== 0"
             :key="`${i}-divider`"
           ></v-divider>
-
-          <v-list-item :key="`${i}-${task.text}`">
+        <v-list-item :key="`${i}-${task.id}`" @mouseover="currHover=task.id" @mouseleave="currHover=null">
             <v-list-item-action>
               <v-checkbox
                 v-model="task.done"
@@ -95,18 +98,30 @@
 
             <v-spacer></v-spacer>
 
-            <v-scroll-x-transition>
-              <v-icon
-                v-if="task.done"
-                color="success"
+          <v-scroll-x-transition>
+            <v-icon
+              v-if="task.done"
+              color="success"
               >
-                mdi-check
-              </v-icon>
-            </v-scroll-x-transition>
+              mdi-check
+            </v-icon>
+            <v-icon
+              v-else-if="currHover === task.id"
+              color="red lighten-1"
+              @click="destroy(task.id)"
+              >
+              mdi-delete
+            </v-icon>
+          </v-scroll-x-transition>
+
+
           </v-list-item>
         </template>
       </v-slide-y-transition>
     </v-card>
+    <p v-else class="secondary--text mt-5 ml-5 font-weight-light">
+      Add habits you want to track
+    </p>
   </v-container>
 </template>
 
@@ -117,9 +132,9 @@
   
       ],
       task: null,
-      error: null
+      error: null,
+      currHover:null
     }),
-
     computed: {
       completedTasks () {
         return this.tasks.filter(task => task.done).length
@@ -141,7 +156,7 @@
       create () {
         const currTask = {
           done: false,
-          text: this.task,
+          text: this.task
         };
 
         let exists = false;
@@ -157,19 +172,32 @@
           this.error = 'Task already exists';
           setTimeout(()=>{
             this.error = null;
-          },2000);
+          },3000);
         }
         else{
+          currTask.id = String(this.tasks.length + 1);
           this.tasks.push(currTask);
           localStorage.tasks = JSON.stringify(this.tasks);
         }
 
         this.task = null
       },
+      destroy(id){
+        for(let i = 0; i < this.tasks.length; i++){
+          if(this.tasks[i].id === id){
+            this.tasks.splice(i,1);
+            localStorage.tasks = JSON.stringify(this.tasks);
+            break;
+          }
+        }
+      }
     },
     mounted(){
       if(localStorage.tasks){
-        this.tasks = JSON.parse(localStorage.tasks);    
+        JSON.parse(localStorage.tasks).forEach((val, index)=>{
+          val.id = String(index+1);
+          this.tasks.push(val);
+        });
       }
     }
   }
