@@ -1,20 +1,33 @@
 <template>
-  <v-container style="max-width: 500px">
+  <v-container class="mt-12" style="max-width: 500px">
     <v-text-field
       v-model="task"
       label="What are you working on?"
       solo
       @keydown.enter="create"
     >
-      <v-fade-transition v-slot:append>
+    <!-- <template > -->
+      <v-fade-transition slot="append">
         <v-icon
           v-if="task"
           @click="create"
         >
-          add_circle
+          mdi-plus-circle-outline
         </v-icon>
       </v-fade-transition>
+    <!-- </template> -->
     </v-text-field>
+<!--     <p class="">
+      
+      <v-fade-transition slot="append">
+        <span class="text-caption accent-1 red--text" v-if="error">{{error}}</span>
+      </v-fade-transition>
+
+
+    </p> -->
+      <v-fade-transition slot="append">
+        <p class="text-caption accent-1 red--text" v-if="error">{{error}}</p>
+      </v-fade-transition>
 
     <h2 class="display-1 success--text pl-4">
       Tasks:&nbsp;
@@ -30,6 +43,7 @@
     <v-row
       class="my-1"
       align="center"
+      dense
     >
       <strong class="mx-4 info--text text--darken-2">
         Remaining: {{ remainingTasks }}
@@ -51,7 +65,7 @@
 
     <v-divider class="mb-4"></v-divider>
 
-    <v-card v-if="tasks.length > 0">
+    <v-card v-if="tasks.length > 0" >
       <v-slide-y-transition
         class="py-0"
         group
@@ -100,16 +114,10 @@
   export default {
     data: () => ({
       tasks: [
-        {
-          done: false,
-          text: 'Foobar',
-        },
-        {
-          done: false,
-          text: 'Fizzbuzz',
-        },
+  
       ],
       task: null,
+      error: null
     }),
 
     computed: {
@@ -117,23 +125,53 @@
         return this.tasks.filter(task => task.done).length
       },
       progress () {
-        return this.completedTasks / this.tasks.length * 100
+        if(this.tasks.length){
+          return this.completedTasks / this.tasks.length * 100;
+        }
+        else{
+          return 0;
+        }
       },
       remainingTasks () {
-        return this.tasks.length - this.completedTasks
+        return this.tasks.length - this.completedTasks;
       },
     },
 
     methods: {
       create () {
-        this.tasks.push({
+        const currTask = {
           done: false,
           text: this.task,
-        })
+        };
+
+        let exists = false;
+
+        for(let i = 0; i < this.tasks.length; i++){
+          const {text, done} = this.tasks[i];
+          if(text.toLowerCase() === currTask.text.toLowerCase() && done === currTask.done){
+            exists = true;
+            break;
+          }
+        }
+        if(exists){
+          this.error = 'Task already exists';
+          setTimeout(()=>{
+            this.error = null;
+          },2000);
+        }
+        else{
+          this.tasks.push(currTask);
+          localStorage.tasks = JSON.stringify(this.tasks);
+        }
 
         this.task = null
       },
     },
+    mounted(){
+      if(localStorage.tasks){
+        this.tasks = JSON.parse(localStorage.tasks);    
+      }
+    }
   }
 </script>
 
